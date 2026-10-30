@@ -13,7 +13,7 @@ module.exports.config = {
 
 const MEDIA_EXT = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".mov", ".mkv", ".webm"];
 // true = নতুন সদস্য যোগ দিলেও এই ফাইল স্বাগতম পাঠাবে। Sahu-র wlcome.js রাখলে এটা false করো (নইলে দুবার যাবে)।
-const WELCOME_MEMBERS = true;
+const WELCOME_MEMBERS = false;
 
 function randomMedia(dir) {
   try {
