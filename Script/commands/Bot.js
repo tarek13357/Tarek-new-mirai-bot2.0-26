@@ -383,7 +383,7 @@ const greetings = [
 
 
  if (
- raw === "babu" || raw === "bow" || raw === "bby" ||
+ raw === "babu" || raw === "bot" || raw === "bby" ||
  raw === "jan" || raw === "xan" || raw === "জান" ||
  raw === "বট" || raw === "বেবি"
  ) {
