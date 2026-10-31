@@ -1,113 +1,23 @@
-const axios = require("axios");
-
 module.exports.config = {
-    name: "imgur",
-    aliases: ["img", "imgr", "imgbb"],
-    version: "1.1.0",
-    hasPermssion: 0,
-    credits: "SHAHADAT SAHU",
-    description: "Upload image, video or GIF to Imgur and get direct links",
-    commandCategory: "Other",
-    usages: "[reply with media]",
-    cooldowns: 0,
-    usePrefix: true,
-    dependencies: {
-        axios: ""
-    }
+ name: "imgur",
+ version: "1.0.0", 
+ hasPermssion: 0,
+ credits: "Islamick Cyber Chat",
+ description: "create your video link",
+ commandCategory: "other", 
+ usages: "[tag]", 
+ cooldowns: 0,
 };
 
-module.exports.run = async function ({ api, event }) {
-    try {
-        const reply = event.messageReply;
+module.exports.run = async ({ api, event }) => {
+const axios = global.nodemodule['axios'];
 
-        if (
-            !reply ||
-            !reply.attachments ||
-            reply.attachments.length === 0
-        ) {
-            return api.sendMessage(
-                "⚠️ Please reply to an image, video or GIF with /imgur",
-                event.threadID,
-                event.messageID
-            );
-        }
-
-        const response = await axios.get(
-            "https://raw.githubusercontent.com/shaonproject/Shaon/main/api.json",
-            {
-                timeout: 15000
-            }
-        );
-
-        const apiUrl = response.data?.imgur;
-
-        if (!apiUrl) {
-            throw new Error("Imgur API URL not found");
-        }
-
-        const links = [];
-
-        for (const attachment of reply.attachments) {
-            if (!attachment.url) {
-                links.push("❌ Media URL not found");
-                continue;
-            }
-
-            try {
-                const upload = await axios.get(
-                    `${apiUrl}/imgur`,
-                    {
-                        params: {
-                            link: attachment.url
-                        },
-                        timeout: 60000
-                    }
-                );
-
-                const directLink =
-                    upload.data?.uploaded?.image;
-
-                links.push(
-                    directLink ||
-                    "❌ Upload failed"
-                );
-
-            } catch (error) {
-                links.push(
-                    "❌ Failed to upload"
-                );
-            }
-        }
-
-        if (!links.length) {
-            return api.sendMessage(
-                "❌ No media was uploaded.",
-                event.threadID,
-                event.messageID
-            );
-        }
-
-        const message =
-            links.length === 1
-                ? links[0]
-                : `${links.join("\n")}`;
-
-        return api.sendMessage(
-            message,
-            event.threadID,
-            event.messageID
-        );
-
-    } catch (error) {
-        console.error(
-            "[IMGUR ERROR]",
-            error.message
-        );
-
-        return api.sendMessage(
-            "❌ Imgur upload failed.",
-            event.threadID,
-            event.messageID
-        );
-    }
-};
+const apis = await axios.get('https://raw.githubusercontent.com/shaonproject/Shaon/main/api.json')
+ const Shaon = apis.data.imgur
+ 
+var linkanh = event.messageReply.attachments[0].url || args.join(" ");
+ if(!linkanh) return api.sendMessage('╭•┄┅══❁🌺❁══┅┄•╮\n\n আসসালামু আলাইকুম-!!🖤💫\n আপনি যেই ছোবি টাকে Imgur link বানাতে চান সেই ছোবি টা imgur লিখে রিপ্লাই করুন \n\n╰•┄┅══❁🌺❁══┅┄•╯', event.threadID, event.messageID)
+const res = await axios.get(`${Shaon}/imgur?link=${encodeURIComponent(linkanh)}`); 
+var img = res.data.uploaded.image;
+ return api.sendMessage(`"${img}",`, event.threadID, event.messageID);
+}
