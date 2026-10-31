@@ -1,79 +1,80 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
-
 module.exports.config = {
-  name: "love",
-  version: "1.0.0",
-  hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
-  description: "Generate a couple banner image using sender and target Facebook UID via Avatar Canvas API",
-  commandCategory: "banner",
-  usePrefix: true,
-  usages: "[@mention | reply]",
-  cooldowns: 5
+    name: "love",
+    version: "2.6.0",
+    hasPermssion: 0,
+    credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+    description: "",
+    commandCategory: "Love",
+    usages: "[tag]",
+    cooldowns: 5,
+    dependencies: {
+        "axios": "",
+        "fs-extra": "",
+        "path": "",
+        "jimp": ""
+    }
 };
 
-module.exports.run = async function ({ event, api }) {
-  const { threadID, messageID, mentions, messageReply, senderID } = event;
+module.exports.onLoad = async() => {
+    const { resolve } = global.nodemodule["path"];
+    const { existsSync, mkdirSync } = global.nodemodule["fs-extra"];
+    const { downloadFile } = global.utils;
+    const dirMaterial = __dirname + `/cache/canvas/`;
+    const path = resolve(__dirname, 'cache/canvas', 'love2.jpg');
+    if (!existsSync(dirMaterial + "canvas")) mkdirSync(dirMaterial, { recursive: true });
+    if (!existsSync(path)) await downloadFile("https://i.imgur.com/JTvb5yc.png", path);
+}
 
-  let targetID = null;
-  if (mentions && Object.keys(mentions).length > 0) {
-    targetID = Object.keys(mentions)[0];
-  } else if (messageReply && messageReply.senderID) {
-    targetID = messageReply.senderID;
-  }
+async function makeImage({ one, two }) {
+    const fs = global.nodemodule["fs-extra"];
+    const path = global.nodemodule["path"];
+    const axios = global.nodemodule["axios"]; 
+    const jimp = global.nodemodule["jimp"];
+    const __root = path.resolve(__dirname, "cache", "canvas");
 
-  if (!targetID) {
-    return api.sendMessage("Please reply or mention someone......", threadID, messageID);
-  }
+    let tromcho_img = await jimp.read(__root + "/love2.jpg");
+    let pathImg = __root + `/love2_${one}_${two}.png`;
+    let avatarOne = __root + `/avt_${one}.png`;
+    let avatarTwo = __root + `/avt_${two}.png`;
+    
+    let getAvatarOne = (await axios.get(`https://graph.facebook.com/${one}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: 'arraybuffer' })).data;
+    fs.writeFileSync(avatarOne, Buffer.from(getAvatarOne, 'utf-8'));
+    
+    let getAvatarTwo = (await axios.get(`https://graph.facebook.com/${two}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: 'arraybuffer' })).data;
+    fs.writeFileSync(avatarTwo, Buffer.from(getAvatarTwo, 'utf-8'));
+    
+    let circleOne = await jimp.read(await circle(avatarOne));
+    let circleTwo = await jimp.read(await circle(avatarTwo));
+    tromcho_img.composite(circleOne.resize(270, 270), 800, 100).composite(circleTwo.resize(300, 300), 205, 300);
+    
+    let raw = await tromcho_img.getBufferAsync("image/png");
+    
+    fs.writeFileSync(pathImg, raw);
+    fs.unlinkSync(avatarOne);
+    fs.unlinkSync(avatarTwo);
+    
+    return pathImg;
+}
+async function circle(image) {
+    const jimp = require("jimp");
+    image = await jimp.read(image);
+    image.circle();
+    return await image.getBufferAsync("image/png");
+}
 
-  const captions = [
-    "💖 ⎯͢⎯⃝🩷😽 তুমি আমার চোখেতে সরলতার উপমা ⎯͢⎯⃝🩷🐰🍒",
-    "💖 🥺❤️ প্রিয়.....! 😊\nকখনো কাঁদাও, কখনো হাসাও,\nআবার কখনো এমন ভালোবাসা দাও,\nযেন পৃথিবীর সব সুখ তোমার মাঝে খুঁজে পাই...! 💔❤️",
-    "বিচ্ছেদের পরেও যোগাযোগ রাখার নামই হচ্ছে মায়া ____💖 💗🌺",
-    "মানুষ ছেড়ে যায়, কিন্তু স্মৃতি নয়!💖",
-    "ইচ্ছে 'গুলো শব্দহীন...!! ভাবনা সে-তো প্রতি দিন..! 🌸💔",
-    "ভালোবাসা মানে কেবল প্রেম নয়, বরং যার হাসিতে সকাল শুরু হয় 💖",
-    "যে সম্পর্ক চোখে দেখা যায় না, মনে থাকে— সেটাই সত্যিকারের ভালোবাসা 💗",
-    "তুমি হয়তো দূরে আছো, কিন্তু অনুভূতির ঠিকানা এখনো তুমি!💞",
-    "চোখের ভাষা বোঝে যে, সেই প্রিয় ❤️",
-    "তুমি মিষ্টি অভ্যাস— যাকে ছাড়াও থাকা যায় না 💖"
-  ];
-
-  const caption = captions[Math.floor(Math.random() * captions.length)];
-
-  try {
-    const apiList = await axios.get(
-      "https://gitlab.com/shahadat-sahu/sahu-api/-/raw/main/API.json"
-    );
-
-    const AVATAR_CANVAS_API = apiList.data.AvatarCanvas;
-
-    const res = await axios.post(
-      `${AVATAR_CANVAS_API}/api`,
-      {
-        cmd: "love",
-        senderID,
-        targetID
-      },
-      { responseType: "arraybuffer", timeout: 20000 }
-    );
-
-    const imgPath = path.join(__dirname, "cache", `love_${senderID}_${targetID}.png`);
-    fs.writeFileSync(imgPath, Buffer.from(res.data));
-
-    return api.sendMessage(
-      {
-        body: caption,
-        attachment: fs.createReadStream(imgPath)
-      },
-      threadID,
-      () => fs.unlinkSync(imgPath),
-      messageID
-    );
-
-  } catch {
-    return api.sendMessage("API Error Call Boss SAHU", threadID, messageID);
-  }
-};
+module.exports.run = async function ({ event, api, args }) {
+    const fs = global.nodemodule["fs-extra"];
+    const { threadID, messageID, senderID } = event;
+    var mention = Object.keys(event.mentions || {})[0]
+    if (!mention) return api.sendMessage("Please tag 1 person", threadID, messageID);
+    let tag = String(event.mentions[mention]).replace("@", "");
+    {
+        var one = senderID, two = mention;
+        return makeImage({ one, two }).then(path => api.sendMessage({ body: "This "  +  tag + ' love you so much💔',
+            mentions: [{
+          tag: tag,
+          id: mention
+        }],
+     attachment: fs.createReadStream(path) }, threadID, () => fs.unlinkSync(path), messageID));
+    }
+                                        }
