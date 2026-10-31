@@ -13,8 +13,8 @@
   "EMAIL": "Facebook number/ID",
   "PASSWORD": "Facebook password",
   "OTPKEY": "Facebook 2FA Secret Key",
-  "BOTNAME": "আমার বস তানজিম",
-  "PREFIX": ".",
+  "BOTNAME": "আমার বস তারেক সরকার",
+  "PREFIX": "/",
   "usePrefix": false,
   "reactUnsend": [
     "😡",
@@ -23,8 +23,8 @@
     "😠"
   ],
   "ADMINBOT": [
-    "61593059462977",
-    "61595759931772",
+    "100089702123718",
+    "",
     ""
   ],
   "DEVELOPER": [
