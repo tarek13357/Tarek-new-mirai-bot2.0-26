@@ -1,70 +1,47 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
-
 module.exports.config = {
-  name: "chor",
-  version: "2.0.0",
-  hasPermssion: 0,
-  credits: "SHAHADAT SAHU",
-  description: "Scooby-doo meme using Avatar Canvas API",
-  commandCategory: "fun",
-  usePrefix: true,
-  usages: "[@mention | reply]",
-  cooldowns: 5
+	name: "chor",
+	version: "1.0.1",
+	hasPermssion: 0,
+	credits: "Joshua Sy",
+	description: "scooby doo template memes",
+	commandCategory: "Picture",
+	usages: "...",
+	cooldowns: 5,
+	dependencies: {
+	 "fs-extra": "",
+	 "axios": "",
+	 "canvas" :"",
+	 "jimp": "",
+	 "node-superfetch": ""
+	}
 };
 
-module.exports.run = async function ({ event, api }) {
-  const { threadID, messageID, senderID, mentions, messageReply } = event;
-
-  let targetID = null;
-
-  if (mentions && Object.keys(mentions).length > 0) {
-    targetID = Object.keys(mentions)[0];
-  } else if (messageReply && messageReply.senderID) {
-    targetID = messageReply.senderID;
-  }
-
-  if (!targetID) {
-    return api.sendMessage("Please reply or mention someone.", threadID, messageID);
-  }
-
-  try {
-    const apiList = await axios.get(
-      "https://gitlab.com/shahadat-sahu/sahu-api/-/raw/main/API.json"
-    );
-
-    const AVATAR_CANVAS_API = apiList.data.AvatarCanvas;
-
-    const res = await axios.post(
-      `${AVATAR_CANVAS_API}/api`,
-      {
-        cmd: "chor",
-
-        
-        senderID: targetID,
-        targetID: senderID
-      },
-      {
-        responseType: "arraybuffer",
-        timeout: 30000
-      }
-    );
-
-    const imgPath = path.join(__dirname, "cache", `chor_${senderID}_${targetID}.png`);
-    fs.writeFileSync(imgPath, res.data);
-
-    return api.sendMessage(
-      {
-        body: "~বলদ মেয়েদের চিপায় ধরা খাইছে😹🤣",
-        attachment: fs.createReadStream(imgPath)
-      },
-      threadID,
-      () => fs.unlinkSync(imgPath),
-      messageID
-    );
-
-  } catch (error) {
-    return api.sendMessage("API Error Call Boss SAHU.", threadID, messageID);
-  }
+module.exports.circle = async (image) => {
+	 const jimp = global.nodemodule['jimp'];
+ 	image = await jimp.read(image);
+ 	image.circle();
+ 	return await image.getBufferAsync("image/png");
 };
+
+module.exports.run = async ({ event, api, args, Users }) => {
+try {
+ const Canvas = global.nodemodule['canvas'];
+ const request = global.nodemodule["node-superfetch"];
+ const jimp = global.nodemodule["jimp"];
+ const fs = global.nodemodule["fs-extra"];
+ var path_toilet = __dirname+'/cache/damma.jpg'; 
+ var id = Object.keys(event.mentions)[0] || event.senderID;
+ const canvas = Canvas.createCanvas(500, 670);
+	const ctx = canvas.getContext('2d');
+	const background = await Canvas.loadImage('https://i.imgur.com/ES28alv.png');
+ 
+	var avatar = await request.get(`https://graph.facebook.com/${id}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`);
+	avatar = await this.circle(avatar.body);
+	ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+	ctx.drawImage(await Canvas.loadImage(avatar), 48, 410, 111, 111);
+	const imageBuffer = canvas.toBuffer();
+	fs.writeFileSync(path_toilet,imageBuffer);
+	 api.sendMessage({attachment: fs.createReadStream(path_toilet, {'highWaterMark': 128 * 1024}), body: "╭──────•◈•───────╮\n 𝗜𝘀𝗹𝗮𝗺𝗶𝗰𝗸 𝗰𝗵𝗮𝘁 𝗯𝗼𝘁 \n\nচোর ধরছি মুরগির দুধ চুরি করতে গিয়া ধরা খাইছে_ 🐸👻\n\n BOT OWNER 𝚃𝚊𝚛𝚎𝚔 ッ\n╰──────•◈•───────╯"}, event.threadID, () => fs.unlinkSync(path_toilet), event.messageID);
+}
+catch(e) {api.sendMessage(e.stack, event.threadID )}
+}
