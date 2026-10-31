@@ -1,167 +1,39 @@
 module.exports.config = {
-    name: "kick",
-    aliases: ["boot"],
-    version: "2.0.0",
-    hasPermssion: 0,
-    credits: "SHAHADAT SAHU",
-    description: "Tag kora user-ke group theke remove kore",
-    commandCategory: "System",
-    usages: "[tag]",
-    cooldowns: 0
+	name: "kick",
+	version: "1.0.1", 
+	hasPermssion: 1,
+	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  description: "the person you need to remove from the group by tag",
+	commandCategory: "System", 
+	usages: "[tag]", 
+	cooldowns: 0,
 };
 
-function getThreadInfo(api, threadID) {
-    return new Promise((resolve, reject) => {
-        if (typeof api.getThreadInfo !== "function") {
-            return reject(new Error("getThreadInfo supported na"));
-        }
-
-        let doneOnce = false;
-
-        const done = (error, data) => {
-            if (doneOnce) return;
-            doneOnce = true;
-            error ? reject(error) : resolve(data);
-        };
-
-        try {
-            const result = api.getThreadInfo(threadID, done);
-
-            if (result && typeof result.then === "function") {
-                result.then(data => done(null, data)).catch(done);
-            } else if (result && typeof result === "object") {
-                done(null, result);
-            }
-        } catch (error) {
-            done(error);
-        }
-    });
+module.exports.languages = {
+	"vi": {
+		"error": "Đã có lỗi xảy ra, vui lòng thử lại sau",
+		"needPermssion": "Cần quyền quản trị viên nhóm\nVui lòng thêm và thử lại!",
+		"missingTag": "Bạn phải tag người cần kick"
+	},
+	"en": {
+		"error": "Error! An error occurred. Please try again later!",
+		"needPermssion": "Need group admin\nPlease add and try again!",
+		"missingTag": "You need tag some person to kick"
+	}
 }
 
-function removeUser(api, userID, threadID) {
-    return new Promise((resolve, reject) => {
-        let doneOnce = false;
-
-        const done = (error, data) => {
-            if (doneOnce) return;
-            doneOnce = true;
-            error ? reject(error) : resolve(data);
-        };
-
-        try {
-            const result = api.removeUserFromGroup(userID, threadID, done);
-
-            if (result && typeof result.then === "function") {
-                result.then(data => done(null, data)).catch(done);
+module.exports.run = async function({ api, event, getText, Threads }) {
+	var mention = Object.keys(event.mentions);
+	try {
+		let dataThread = (await Threads.getData(event.threadID)).threadInfo;
+		if (!dataThread.adminIDs.some(item => item.id == api.getCurrentUserID())) return api.sendMessage(getText("needPermssion"), event.threadID, event.messageID);
+		if(!mention[0]) return api.sendMessage("You have to tag the need to kick",event.threadID);
+		if (dataThread.adminIDs.some(item => item.id == event.senderID)) {
+			for (const o in mention) {
+				setTimeout(() => {
+					api.removeUserFromGroup(mention[o],event.threadID) 
+				},3000)
+			}
+		}
+	} catch { return api.sendMessage(getText("error"),event.threadID) }
             }
-        } catch (error) {
-            done(error);
-        }
-    });
-}
-
-module.exports.run = async function ({ api, event }) {
-    const { threadID, messageID, senderID, mentions } = event;
-
-    try {
-        const mentionIDs = Object.keys(mentions || {});
-
-        if (!mentionIDs.length) {
-            return api.sendMessage(
-                "⚠️ Jake kick korte chan take tag korun.",
-                threadID,
-                messageID
-            );
-        }
-
-        const threadInfo = await getThreadInfo(api, threadID);
-
-        if (!threadInfo || !Array.isArray(threadInfo.adminIDs)) {
-            return api.sendMessage(
-                "❌ Group admin information check kora jacche na.",
-                threadID,
-                messageID
-            );
-        }
-
-        const botID = String(api.getCurrentUserID());
-
-        const botIsAdmin = threadInfo.adminIDs.some(admin => {
-            const id = typeof admin === "object" ? admin.id : admin;
-            return String(id) === botID;
-        });
-
-        if (!botIsAdmin) {
-            return api.sendMessage(
-                "⚠️ Bot-ke age group admin korte hobe.",
-                threadID,
-                messageID
-            );
-        }
-
-        const senderIsAdmin = threadInfo.adminIDs.some(admin => {
-            const id = typeof admin === "object" ? admin.id : admin;
-            return String(id) === String(senderID);
-        });
-
-        if (!senderIsAdmin) {
-            return api.sendMessage(
-                "⚠️ Shudhu group admin-ra ei command use korte parbe.",
-                threadID,
-                messageID
-            );
-        }
-
-        let success = 0;
-        let failed = 0;
-
-        for (const userID of mentionIDs) {
-            if (String(userID) === botID) {
-                failed++;
-                continue;
-            }
-
-            try {
-                await removeUser(api, userID, threadID);
-                success++;
-            } catch (error) {
-                failed++;
-                console.error(
-                    `[KICK] ${userID} remove korte pareni:`,
-                    error?.message || error
-                );
-            }
-        }
-
-        if (success > 0 && failed === 0) {
-            return api.sendMessage(
-                `✅ ${success} jon-ke group theke remove kora hoyeche.`,
-                threadID,
-                messageID
-            );
-        }
-
-        if (success > 0) {
-            return api.sendMessage(
-                `✅ Remove hoyeche: ${success} jon\n❌ Failed: ${failed} jon`,
-                threadID,
-                messageID
-            );
-        }
-
-        return api.sendMessage(
-            "⚠️ User-ke group theke remove kora jayni.",
-            threadID,
-            messageID
-        );
-
-    } catch (error) {
-        console.error("[KICK ERROR]", error);
-
-        return api.sendMessage(
-            "⚠️ Kick korte giye ekta error hoyeche.",
-            threadID,
-            messageID
-        );
-    }
-};
