@@ -7,7 +7,9 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
   return async function ({ event }) {
     const dateNow = Date.now()
     const time = moment.tz("Asia/Kolkata").format("HH:MM:ss DD/MM/YYYY");
-    const { allowInbox, PREFIX, ADMINBOT, NDH, DeveloperMode, adminOnly, keyAdminOnly, ndhOnly,adminPaOnly } = global.config;
+    const { allowInbox, PREFIX, DeveloperMode, adminOnly, keyAdminOnly, ndhOnly, adminPaOnly } = global.config;
+    const ADMINBOT = global.config.ADMINBOT || [];
+    const NDH = global.config.NDH || []; // config এ NDH না থাকলেও যেন কমান্ড না ভাঙে
     const { userBanned, threadBanned, threadInfo, threadData, commandBanned } = global.data;
     const { commands, cooldowns } = global.client;
     var { body, senderID, threadID, messageID } = event;
@@ -41,43 +43,6 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
       if (!ADMINBOT.includes(senderID.toString())) {
         if (userBanned.has(senderID)) {
           const { reason, dateAdded } = userBanned.get(senderID) || {};
-          return api.sendMessage(global.getText("handleCommand", "userBanned", reason, dateAdded), threadID, async (err, info) => {
-            await new Promise(resolve => setTimeout(resolve, 5 * 1000));
-            return api.unsendMessage(info.messageID);
-          }, messageID);
-        } else {
-          if (threadBanned.has(threadID)) {
-            const { reason, dateAdded } = threadBanned.get(threadID) || {};
-            return api.sendMessage(global.getText("handleCommand", "threadBanned", reason, dateAdded), threadID, async (err, info) => {
-              await new Promise(resolve => setTimeout(resolve, 5 * 1000));
-              return api.unsendMessage(info.messageID);
-            }, messageID);
-          }
-        }
-      }
-    }
-    const [matchedPrefix] = body.match(prefixRegex),
-      args = body.slice(matchedPrefix.length).trim().split(/ +/);
-    commandName = args.shift().toLowerCase();
-    var command = commands.get(commandName);
-    if (!command) {
-      var allCommandName = [];
-      const commandValues = commands['keys']();
-      for (const cmd of commandValues) allCommandName.push(cmd)
-      const checker = stringSimilarity.findBestMatch(commandName, allCommandName);
-      if (checker.bestMatch.rating >= 0.5) command = client.commands.get(checker.bestMatch.target);
-      else return api.sendMessage(global.getText("handleCommand", "commandNotExist", checker.bestMatch.target), threadID);
-    }
-    if (commandBanned.get(threadID) || commandBanned.get(senderID)) {
-      if (!ADMINBOT.includes(senderID)) {
-        const banThreads = commandBanned.get(threadID) || [],
-          banUsers = commandBanned.get(senderID) || [];
-        if (banThreads.includes(command.config.name))
-          return api.sendMessage(global.getText("handleCommand", "commandThreadBanned", command.config.name), threadID, async (err, info) => {
-            await new Promise(resolve => setTimeout(resolve, 5 * 1000))
-            return api.unsendMessage(info.messageID);
-          }, messageID);
-        if (banUsers.includes(command.config.name))
           return api.sendMessage(global.getText("handleCommand", "commandUserBanned", command.config.name), threadID, async (err, info) => {
             await new Promise(resolve => setTimeout(resolve, 5 * 1000));
             return api.unsendMessage(info.messageID);
@@ -144,4 +109,4 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
     }
   };
 };
-            
+                          
