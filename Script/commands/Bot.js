@@ -205,19 +205,6 @@ module.exports.run = async function ({ api, event, args, Users }) {
  const replies = Array.isArray(res.data.response) ? res.data.response : [res.data.response];
 
  for (const rep of replies) {
- await new Promise(resolve => {
- api.sendMessage(rep, event.threadID, (err, info) => {
- if (!err) {
- global.client.handleReply.push({
- name: module.exports.config.name,
- messageID: info.messageID,
- author: event.senderID,
- type: "simsimi"
- });
- }
- resolve();
- }, event.messageID);
- });
  }
 
  } catch (err) {
@@ -267,7 +254,11 @@ module.exports.handleEvent = async function ({ api, event, Users }) {
  if (!isTrig) {
   if (!REPLY_TO_ALL) return;
   if (raw.length < 2) return;
-  if (global.config && global.config.PREFIX && raw.startsWith(global.config.PREFIX)) return; // কমান্ড হলে বাদ
+  { // কমান্ড হলে (/ . ! # দিয়ে শুরু বা গ্রুপের নিজস্ব প্রিফিক্স) চ্যাট উত্তর দেবে না
+   const _ts = (global.data && global.data.threadData && global.data.threadData.get(String(event.threadID))) || {};
+   const _pf = [global.config && global.config.PREFIX, _ts.PREFIX, "/", ".", "!", "#"].filter(Boolean);
+   if (_pf.some(p => raw.startsWith(p))) return;
+  }
   const tk = String(event.threadID), nowT = Date.now();
   if (nowT - (_lastReply.get(tk) || 0) < 2000) return; // গ্রুপে ২ সেকেন্ডে সর্বোচ্চ ১টি
   _lastReply.set(tk, nowT);
@@ -432,4 +423,5 @@ const greetings = [
 
  } catch {}
 };
-                        
+
+   
